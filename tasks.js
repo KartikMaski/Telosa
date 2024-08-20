@@ -1,27 +1,48 @@
-// Load checkbox states from local storage on page load
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize checkboxes state from local storage
     const checkboxes = document.querySelectorAll('input[type="checkbox"]');
     checkboxes.forEach(checkbox => {
         checkbox.checked = localStorage.getItem(checkbox.id) === 'true';
         if (checkbox.checked) {
             checkbox.nextElementSibling.classList.add('checked');
+            // Move checked tasks to the complete section
+            document.getElementById('complete-tasks').appendChild(checkbox.parentElement);
         }
     });
     Counters();
+
+    // Event delegation for checkbox clicks
+    document.getElementById('incomplete-tasks').addEventListener('click', function(event) {
+        if (event.target.type === 'checkbox') {
+            CheckboxClick(event);
+        }
+    });
+
+    document.getElementById('complete-tasks').addEventListener('click', function(event) {
+        if (event.target.type === 'checkbox') {
+            CheckboxClick(event);
+        }
+    });
 });
 
 // Function to handle checkbox click events
-function handleCheckboxClick(event) {
+function CheckboxClick(event) {
     const checkbox = event.target;
     const label = checkbox.nextElementSibling;
-    
+    const taskElement = checkbox.parentElement;
+
     if (checkbox.checked) {
-        // Confirmation before marking as complete
         if (!confirm('Are you sure you want to mark this task as complete?')) {
             checkbox.checked = false;
             label.classList.remove('checked');
             return;
         }
+
+        // Move task to the complete section
+        document.getElementById('complete-tasks').appendChild(taskElement);
+    } else {
+        // Move task back to the incomplete section
+        document.getElementById('incomplete-tasks').appendChild(taskElement);
     }
 
     // Update label appearance based on checkbox state
@@ -31,9 +52,10 @@ function handleCheckboxClick(event) {
         label.classList.remove('checked');
     }
 
+    // Save checkbox state in localStorage
     localStorage.setItem(checkbox.id, checkbox.checked);
 
-    
+    // Update counters
     Counters();
 
     console.log('Checkbox state:', checkbox.checked, '- Task:', label.textContent);
@@ -42,7 +64,7 @@ function handleCheckboxClick(event) {
 // Function to update task counters
 function Counters() {
     const totalIncomplete = document.querySelectorAll('#incomplete-tasks .element input[type="checkbox"]:not(:checked)').length;
-    const totalComplete = document.querySelectorAll('#complete-tasks .element1 input[type="checkbox"]:checked').length;
+    const totalComplete = document.querySelectorAll('#complete-tasks .element input[type="checkbox"]:checked').length;
 
     const incompleteCountElement = document.getElementById('incomplete-count');
     const completeCountElement = document.getElementById('complete-count');
@@ -55,7 +77,6 @@ function Counters() {
         completeCountElement.textContent = `Completed: ${totalComplete}`;
     }
 }
-
 
 // Function to filter tasks by status
 function filterTasks(status) {
@@ -70,39 +91,29 @@ function filterTasks(status) {
     });
 }
 
-// Add event listeners to checkboxes
-document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-    checkbox.addEventListener('click', handleCheckboxClick);
-});
+// Function to add a new task
+function addTask() {
+    const taskInput = document.getElementById('task-input');
+    const taskText = taskInput.value.trim();
+    
+    if (taskText === '') {
+        alert('Please enter a task');
+        return;
+    }
 
+    const newTaskElement = document.createElement('div');
+    newTaskElement.className = 'element';
 
+    newTaskElement.innerHTML = `
+        <input type="checkbox" style="margin-left: 21px; margin-right: 10px;" />
+        <label>${taskText}</label>
+        <p class="detail" style="margin-top: 0px; margin-left: 49px; margin-bottom: 6px;"><i class="fa-solid fa-list"></i>General</p>
+    `;
 
-// tasks.js
-document.addEventListener('DOMContentLoaded', function() {
-    // Function to add a new task
-    window.addTask = function() {
-        const taskInput = document.getElementById('task-input');
-        const taskText = taskInput.value.trim();
-        
-        if (taskText === '') {
-            alert('Please enter a task');
-            return;
-        }
+    document.getElementById('incomplete-tasks').appendChild(newTaskElement);
 
-        // Create new task element
-        const newTaskElement = document.createElement('div');
-        newTaskElement.className = 'element';
+    
+    Counters();
 
-        newTaskElement.innerHTML = `
-            <input type="checkbox" style="margin-left: 21px; margin-right: 10px;" />
-            <label>${taskText}</label>
-            <p class="detail" style="margin-top: 0px; margin-left: 49px; margin-bottom: 6px;"><i class="fa-solid fa-list"></i>General</p>
-        `;
-
-        // Add the new task to the incomplete tasks section
-        document.getElementById('incomplete-tasks').appendChild(newTaskElement);
-
-        // Clear the input field
-        taskInput.value = '';
-    };
-});
+    taskInput.value = '';
+}
